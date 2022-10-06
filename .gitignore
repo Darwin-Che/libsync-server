@@ -1,0 +1,7 @@
+/.DS_Store
+/.vscode
+/tmp
+/itest-log.txt
+*.o
+*.d
+/sync
