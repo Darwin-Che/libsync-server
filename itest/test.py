@@ -17,35 +17,38 @@ print("PROGRAM=%s, ARGS=%s\n" % (PROGRAM, ARGS))
 
 TIMEOUT = 3  # 3 seconds
 
+CHNL_NAME = "c1"
+
 
 class BaseTest(TestCase):
     def setUp(self):
-        # Start the under-test program
+        print(f"Starting {self.__class__.__name__}")
         self.process = subprocess.Popen(
             [PROGRAM, *ARGS], stdout=log_file, stderr=log_file
         )
+        print("Setup the Main Socket")
         self.main_socket = self.connect(HOST, PORT_CONTROL)  # On channel default
+        print("Setup the Update Socket")
         self.update_socket = self.connect(HOST, PORT_UPDATE)
+        print("Setup the Control Socket")
         self.control_socket = self.connect(HOST, PORT_CONTROL)
 
     def connect(self, host, port):
         ret = None
-        # Connect to the program
         while True:
             try:
                 ret = socket.create_connection((host, port), TIMEOUT)
                 break
             except socket.error:
                 print("Connection Failed, Retrying..")
-                time.sleep(0.5)
+                time.sleep(1.0)
+        print("Connection Success")
+        print()
         return ret
 
     def tearDown(self):
-        # self.update_socket.sendall(b"quit")
         self.update_socket.close()
-        # self.control_socket.sendall(b"quit")
         self.control_socket.close()
-        # self.main_socket.sendall(b"quit")
         self.main_socket.close()
 
         self.process.terminate()
@@ -64,12 +67,35 @@ class BaseTest(TestCase):
         self.assertEqual(ret[:-1], msg)
 
     def setUpChannel(self):
-        self.send(self.control_socket, "chnlcreate c1")
+        self.send(self.control_socket, f"chnlcreate {CHNL_NAME}")
         self.assertRecv(self.control_socket, "CHANNEL CREATED")
-        self.send(self.control_socket, "chnlset c1")
+        self.send(self.control_socket, f"chnlset {CHNL_NAME}")
         self.assertRecv(self.control_socket, "CHANNEL IS SET")
-        self.send(self.update_socket, "chnlset c1")
+        self.send(self.update_socket, f"chnlset {CHNL_NAME}")
         self.assertRecv(self.update_socket, "CHANNEL IS SET")
+
+    def closeSocket(self, socket_name):
+        old_socket = getattr(self, socket_name)
+        old_socket.close()
+
+    def startSocket(self, socket_name):
+        port = None
+
+        if socket_name == "control_socket" or socket_name == "main_socket":
+            port = PORT_CONTROL
+        elif socket_name == "update_socket":
+            port = PORT_UPDATE
+
+        if port is None:
+            print("restart socket #{socket_name} fails")
+            return
+
+        new_socket = self.connect(HOST, port)
+        setattr(self, socket_name, new_socket)
+
+    def restartSocket(self, socket_name):
+        self.closeSocket(socket_name)
+        self.startSocket(socket_name)
 
 
 class TestControlBasic(BaseTest):
@@ -115,6 +141,21 @@ class TestControlClosed(BaseTest):
         self.assertRecv(self.control_socket, "QUIT")
         self.send(self.main_socket, "hset k1 f1 v1")
         self.assertRecv(self.main_socket, "v1")
+        self.assertRecv(self.update_socket, "hset k1 f1 v1")
+
+
+class TestUpdateRestarted(BaseTest):
+    def test(self):
+        self.setUpChannel()
+        self.send(self.control_socket, "hget k1 f1")
+        self.assertRecv(self.control_socket, "_")
+        self.closeSocket("update_socket")
+        self.send(self.main_socket, "hset k1 f1 v1")
+        self.assertRecv(self.main_socket, "v1")
+
+        self.startSocket("update_socket")
+        self.send(self.update_socket, "chnlset {CHNL_NAME}")
+        self.assertRecv(self.update_socket, "CHANNEL IS SET")
         self.assertRecv(self.update_socket, "hset k1 f1 v1")
 
 
