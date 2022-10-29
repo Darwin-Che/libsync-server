@@ -3,6 +3,7 @@
 
 #include <cstdlib>
 #include <cstring>
+#include <iostream>
 #include <unistd.h>
 
 // const char * log_path = "log.txt";
@@ -19,6 +20,13 @@ struct StrCmp {
 extern StrCmp str_cmp;
 
 void errExit(const char *msg);
+
+void errExit();
+
+template <typename T, typename... Types> void errExit(T var1, Types... var2) {
+  std::cout << var1 << ' ';
+  errExit(var2...);
+}
 
 int get_word(char *buffer, ssize_t sz, ssize_t &idx, ssize_t &len);
 

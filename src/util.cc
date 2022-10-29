@@ -13,6 +13,11 @@ void errExit(const char *msg) {
   exit(1);
 }
 
+void errExit() {
+  cout << endl;
+  exit(1);
+}
+
 /* Return values:
  * -1 : fail
  * 1 : success

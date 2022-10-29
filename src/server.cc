@@ -82,8 +82,9 @@ unique_ptr<SockRepn> init_accept_sock(int port) {
     Util::errExit("setsockopt");
 
   if (::bind(sock->fd, (struct sockaddr *)&sock->addr,
-             sizeof(struct sockaddr_in)) == -1)
-    Util::errExit("bind");
+             sizeof(struct sockaddr_in)) == -1) {
+    Util::errExit("bind port", port);
+  }
 
   if (listen(sock->fd, BACKLOG) == -1)
     Util::errExit("listen");
@@ -162,10 +163,11 @@ int sv_serve_update(unique_ptr<struct SockRepn> sv_sock, KeyMap &data) {
   // Cleanup Channel
   chnl_mgr.del_update_fd(sv_sock->fd, chid);
 
+  cout << "closing socket" << endl << endl;
+
   if (close(sv_sock->fd) == -1)
     Util::errExit("close");
 
-  cout << "closing socket" << endl << endl;
   return 0;
 }
 
