@@ -59,12 +59,15 @@ class BaseTest(TestCase):
         socket.sendall(msg.encode("ascii"))
 
     def assertRecv(self, socket, msg=None):
-        ret = socket.recv(1024)
+        text = ""
+        while True:
+            data = socket.recv(1).decode("ascii")
+            if data == "\n":
+                break
+            text += data
         if msg is None:
             return
-        ret = ret.decode("ascii")
-        self.assertEqual(ret[-1], "\n")
-        self.assertEqual(ret[:-1], msg)
+        self.assertEqual(text, msg)
 
     def setUpChannel(self):
         self.send(self.control_socket, f"chnlcreate {CHNL_NAME}")
@@ -154,9 +157,12 @@ class TestUpdateRestarted(BaseTest):
         self.assertRecv(self.main_socket, "v1")
 
         self.startSocket("update_socket")
-        self.send(self.update_socket, "chnlset {CHNL_NAME}")
+        self.send(self.update_socket, f"chnlset {CHNL_NAME}")
         self.assertRecv(self.update_socket, "CHANNEL IS SET")
+        # TODO: currently only receive the pending updates until a new update is sent
+        self.send(self.main_socket, "hset k1 f1 v2")
         self.assertRecv(self.update_socket, "hset k1 f1 v1")
+        self.assertRecv(self.update_socket, "hset k1 f1 v2")
 
 
 if __name__ == "__main__":
