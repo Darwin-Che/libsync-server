@@ -49,12 +49,13 @@ int Channel::del_update_fd(int fd) {
 }
 
 int Channel::send_update(const std::string &msg) {
-  cout << "send_update " << msg << endl;
   if (update_fd == FD_INVALID) {
+    cout << "send_update " << msg << " pending" << endl;
     // Store the msg
     pending_msgs.emplace_back(msg);
     return 0;
   } else {
+    cout << "send_update " << msg << " sent" << endl;
     int ret = pending_msgs.size() + 1;
     for (const auto &pending_msg : pending_msgs) {
       Util::write_str(update_fd, pending_msg.c_str());

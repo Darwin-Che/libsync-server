@@ -27,4 +27,7 @@
 #define NIL_CHAR '_'
 #define NIL_STR "_"
 
+#define MODE_ASYNC
+// #define MODE_SYNC
+
 #endif

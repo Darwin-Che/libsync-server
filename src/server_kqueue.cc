@@ -1,5 +1,9 @@
-#include "server_kqueue.h"
+#include "header.h"
+
+#ifdef MODE_ASYNC
+
 #include "conn.h"
+#include "server_impl.h"
 #include "util.h"
 #include <sys/event.h>
 #include <vector>
@@ -15,7 +19,7 @@ void add_to_kqueue(int kq, short filter, Conn *conn) {
   kevent(kq, &ev, 1, nullptr, 0, nullptr);
 }
 
-int sv_main_impl(KeyMap &data, int port_control, int port_update) {
+int sv_main_impl_async(KeyMap &data, int port_control, int port_update) {
   int kq;
   if ((kq = kqueue()) == -1) {
     perror("kqueue() : ");
@@ -73,3 +77,5 @@ int sv_main_impl(KeyMap &data, int port_control, int port_update) {
 
   return 0;
 }
+
+#endif

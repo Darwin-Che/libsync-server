@@ -37,9 +37,8 @@ int get_word(char *buffer, ssize_t sz, ssize_t &idx, ssize_t &len) {
 
 /* Return values:
  * -1 : fails
- * 0  : case 1 : nothing is read, no newline appended;
- *      case 2 : read one '\n' only
- * >0 : number of bytes read, excluding the endding '\n'
+ * 0  : nothing is read, no newline appended;
+ * >0 : number of bytes read, including the endding '\n'
  */
 ssize_t read_line(int fd, void *buffer, size_t n, bool rstrip) {
   ssize_t numRead;
@@ -70,12 +69,13 @@ ssize_t read_line(int fd, void *buffer, size_t n, bool rstrip) {
         break;
 
     } else {
-      if (totRead < n - 1) {
-        totRead++;
+      totRead++;
+      if (totRead < n) {
         *buf++ = ch;
       }
-      if (ch == '\n')
+      if (ch == '\n') {
         break;
+      }
     }
   }
   *buf = '\0';

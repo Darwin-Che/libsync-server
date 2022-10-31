@@ -16,7 +16,8 @@ struct SockRepn {
 class Conn;
 
 struct HandlerReturn {
-  enum { NONE, CONN } type;
+  int state;
+  enum { NONE, CONN, CLOSED } type;
   union {
     Conn *conn;
   };

@@ -1,12 +1,21 @@
 #include "server.h"
-#include "server_kqueue.h"
+#include "header.h"
+#include "server_impl.h"
 
 using namespace std;
 
 #define BACKLOG 4
 
 int sv_main(KeyMap &data, int port_control, int port_update) {
-  return sv_main_impl(data, port_control, port_update);
+#if defined(MODE_ASYNC)
+#warning In ASYNC mode
+  return sv_main_impl_async(data, port_control, port_update);
+#elif defined(MODE_SYNC)
+#warning In SYNC mode
+  return sv_main_impl_sync(data, port_control, port_update);
+#else
+#error Please define one of MODE_ASYNC and MODE_SYNC
+#endif
 }
 
 unique_ptr<SockRepn> init_accept_sock(int port) {

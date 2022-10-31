@@ -40,12 +40,16 @@ HandlerReturn ConnControl::handler() {
 
   ssize_t len =
       Util::read_line(get_fd(), line.get_line(), line.get_sz() - 1, true);
-  if (len < 0)
+  if (len <= 0) {
+    ret.type = HandlerReturn::CLOSED;
     return ret;
+  }
 
   line.parse_words();
 
-  handle_control(line);
+  if (handle_control(line) < 0) {
+    ret.type = HandlerReturn::CLOSED;
+  }
 
   return ret;
 }
